@@ -7,6 +7,7 @@ _start:
     call _askforfunction
     call _listfunctions
     call _getresponse
+    call _checkresponse
 
 _askforfunction:
     mov rax, 1
@@ -48,6 +49,8 @@ _getresponse:
 
 _listcontacts:
 
+_getinfo:
+
 _getname:
     mov rax, 0
     mov rdi, 0
@@ -70,9 +73,33 @@ _checkresponse:
     sub answer, '0'
 
     mov rsi, [answer]
-    mov rbx, '0'
+    mov rbx, '1'
     sub rbx, '0'
     cmp rsi, rbx
+    je _searchfile
+
+    mov rbx, '2'
+    sub rbx, '0'
+    cmp rsi, rbx
+    je _getinfo
+
+    mov rbx, '3'
+    sub rbx, '0'
+    cmp rsi, rbx
+    je _listcontacts
+
+    call _invalidinput
+
+    ret
+
+_invalidinput:
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, invalidmessage
+    mov rdx, leninvalidmessage
+    syscall
+
+    ret
 
 _savefile:
 
@@ -100,6 +127,9 @@ section .data
 
     listcontacts db 'Enter 3 to List all contacts', 10
     lenlistcontacts equ $-listcontacts
+
+    invalidmessage db 'Your input is invalid', 10
+    leninvalidmessage equ $-invalidmessage
 
 segment .bss
     answer resb 1
