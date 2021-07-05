@@ -50,6 +50,9 @@ _getresponse:
 _listcontacts:
 
 _getinfo:
+    call _getname
+    call _getnum
+    call _savetofile
 
 _getname:
     mov rax, 0
@@ -101,9 +104,9 @@ _invalidinput:
 
     ret
 
-_savefile:
+_savetofile:
 
-_getfile:
+_getfilename:
 
 _openfile:
 
