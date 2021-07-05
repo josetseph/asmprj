@@ -138,3 +138,4 @@ segment .bss
     answer resb 1
     name resb 50
     number resb 15
+    filename resb 20
