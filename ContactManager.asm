@@ -1,4 +1,4 @@
-;Branch file
+;Please remember to make it a branch first
 
 section .text
     global _start
@@ -49,10 +49,32 @@ _getresponse:
 _listcontacts:
 
 _getname:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, name
+    mov rdx, 50
+    syscall
+
+    ret
 
 _getnum:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, number
+    mov rdx, 50
+    syscall
 
-_saveinput:
+    ret
+
+_checkresponse:
+    sub answer, '0'
+
+    mov rsi, [answer]
+    mov rbx, '0'
+    sub rbx, '0'
+    cmp rsi, rbx
+
+_savefile:
 
 _getfile:
 
@@ -81,3 +103,5 @@ section .data
 
 segment .bss
     answer resb 1
+    name resb 50
+    number resb 15
