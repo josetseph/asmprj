@@ -106,8 +106,6 @@ _invalidinput:
 
 _savetofile:
 
-_getfilename:
-
 _openfile:
 
 _readfile:
@@ -134,8 +132,10 @@ section .data
     invalidmessage db 'Your input is invalid', 10
     leninvalidmessage equ $-invalidmessage
 
+    filename db 'contacts.txt'
+    lenfilename equ $-filename
+
 segment .bss
     answer resb 1
     name resb 50
     number resb 15
-    filename resb 20
