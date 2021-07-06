@@ -20,7 +20,7 @@ section .text
     mov rax, 2
     mov rdi, %1
     mov rsi, %2
-    mov rdx, 0777
+    mov rdx, 0777o
     syscall
 %endmacro
 %macro fileclose 1
