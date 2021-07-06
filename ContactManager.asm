@@ -152,7 +152,7 @@ _openfileforreading:
 _openfileforwriting:
     mov rax, 2
     mov rdi, filename
-    mov rsi, WRONLY
+    mov rsi, O_WRONLY
     mov rdx, 0777
     syscall
     
