@@ -54,9 +54,8 @@ _getresponse:
     ret
 
 _checkresponse:
-    sub answer, '0'
-
     mov rsi, [answer]
+    sub rsi, '0'
     mov rbx, '1'
     sub rbx, '0'
     cmp rsi, rbx
