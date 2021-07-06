@@ -1,5 +1,8 @@
 ;Please remember to make it a branch first
 
+O_RDONLY    equ 0
+O_WRONLY    equ 1
+
 section .text
     global _start
 
@@ -8,6 +11,9 @@ _start:
     call _listfunctions
     call _getresponse
     call _checkresponse
+    
+    mov rax, 60
+    syscall
 
 _askforfunction:
     mov rax, 1
@@ -47,31 +53,6 @@ _getresponse:
 
     ret
 
-_listcontacts:
-
-_getinfo:
-    call _getname
-    call _getnum
-    call _savetofile
-
-_getname:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, name
-    mov rdx, 50
-    syscall
-
-    ret
-
-_getnum:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, number
-    mov rdx, 50
-    syscall
-
-    ret
-
 _checkresponse:
     sub answer, '0'
 
@@ -104,17 +85,117 @@ _invalidinput:
 
     ret
 
-_savetofile:
+_listcontacts:
+    call _openfileforreading
+    call _readfile
+    call _closefilereadonly
+    
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, datalog
+    mov rdx, 1000
+    syscall
+    
+    ret
 
-_openfile:
+_getinfo:
+    call _getname
+    call _getnum
+    call _savetofile
+    
+    ret
+
+_getname:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, name
+    mov rdx, 50
+    syscall
+
+    ret
+
+_getnum:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, number
+    mov rdx, 50
+    syscall
+
+    ret
+
+_savetofile:
+    call _openfileforwriting
+    
+    mov rsi, name
+    mov rdx, 50
+    call _writetofile
+    
+    mov rsi, number
+    mov rdx, 15
+    call _writetofile
+    
+    call _closefilewriteonly
+    
+    ret
+
+_openfileforreading:
+    mov rax, 2
+    mov rdi, filename
+    mov rsi, O_RDONLY
+    mov rdx, 0777
+    syscall
+    
+    mov [fd_in], rax
+    
+    ret
+    
+_openfileforwriting:
+    mov rax, 2
+    mov rdi, filename
+    mov rsi, WRONLY
+    mov rdx, 0777
+    syscall
+    
+    mov [fd_out], rax
+    
+    ret
 
 _readfile:
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, datalog
+    mov rdx, 1000
+    syscall
+    
+    ret
 
 _searchfile:
+    call _openfileforreading
+    call _readfile
+    call _closefilereadonly
+    
+    ret
 
-_closefile:
+_closefilereadonly:
+    mov rax, 3
+    mov rdi, [fd_in]
+    syscall
+    
+    ret
+    
+_closefilewriteonly:
+    mov rax, 3
+    mov rdi, [fd_out]
+    syscall
+    
+    ret
 
 _writetofile:
+    mov rax, 1
+    mov rdi, 1
+    syscall
+    
+    ret
 
 section .data
     querymessage db 'What functionality are you looking for?', 10
@@ -137,5 +218,11 @@ section .data
 
 segment .bss
     answer resb 1
+    
     name resb 50
     number resb 15
+    
+    datalog resb 1000
+    
+    fd_in resb 1
+    fd_out resb 1
