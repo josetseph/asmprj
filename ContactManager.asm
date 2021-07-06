@@ -214,7 +214,6 @@ section .data
     leninvalidmessage equ $-invalidmessage
 
     filename db 'contacts.txt'
-    lenfilename equ $-filename
 
 segment .bss
     answer resb 1
