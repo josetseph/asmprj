@@ -58,14 +58,11 @@ _getresponse:
     ret
 
 _checkresponse:
-    ;getting the value of 
-    mov rax, [answer]
-    SUB rax, "0"
-    mov [answer], rax
     mov rsi, [answer]
-    
-    ;searching option
-    mov rbx, 1
+    sub rsi, '0'
+    mov rbx, '1'
+    sub rbx, '0'
+
     cmp rsi, rbx
     je _searchfile
 
@@ -116,7 +113,13 @@ _getinfo:
 _openfileforreading:
     fileopen filename, O_RDONLY    
     mov [fd_in], rax
-        
+    
+    ret
+    
+_openfileforwriting:
+    fileopen filename, O_WRONLY
+    mov [fd_out], rax
+
     ret
 
 _readfile:
@@ -158,6 +161,8 @@ section .data
 
     filename db 'contacts.txt', 0
     lenfilename equ $-filename
+
+    filename db 'contacts.txt'
 
 segment .bss
     answer resb 2
