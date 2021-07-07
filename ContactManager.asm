@@ -1,9 +1,35 @@
-;Please remember to make it a branch first
-
-O_RDONLY    equ 0
-O_WRONLY    equ 1
+O_RDONLY equ 0
+O_WRONLY equ 1
 
 section .text
+%macro input 2
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, %1
+    mov rdx, %2
+    syscall
+%endmacro
+%macro output 3
+    mov rax, 1
+    mov rdi, %1
+    mov rsi, %2
+    mov rdx, %3
+    syscall
+%endmacro
+%macro fileopen 2
+    mov rax, 2
+    mov rdi, %1
+    mov rsi, %2
+    mov rdx, 0777o
+    syscall
+%endmacro
+%macro fileclose 1
+    mov rax, 3
+    mov rdi, %1
+    syscall
+%endmacro
+
+
     global _start
 
 _start:
@@ -12,45 +38,23 @@ _start:
     call _getresponse
     call _checkresponse
     
+_exit:
     mov rax, 60
     syscall
 
-_askforfunction:
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, querymessage
-    mov rdx, lenquerymessage
-    syscall
 
+_askforfunction:
+    output 1, querymessage, lenquerymessage
     ret
 
 _listfunctions:
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, firstoption
-    mov rdx, lenfirstoption
-    syscall
-
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, secondoption
-    mov rdx, lensecondoption
-    syscall
-
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, listcontacts 
-    mov rdx, lenlistcontacts
-    syscall
-
+    output 1, firstoption, lenfirstoption
+    output 1, secondoption, lensecondoption
+    output 1, listcontacts, lenlistcontacts
     ret
 
 _getresponse:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, answer
-    mov rdx, 1
-
+    input answer, 1
     ret
 
 _checkresponse:
@@ -58,143 +62,80 @@ _checkresponse:
     sub rsi, '0'
     mov rbx, '1'
     sub rbx, '0'
+
     cmp rsi, rbx
     je _searchfile
 
-    mov rbx, '2'
-    sub rbx, '0'
+    ;input option
+    mov rbx, 2
     cmp rsi, rbx
     je _getinfo
 
-    mov rbx, '3'
-    sub rbx, '0'
+    ;output list option
+    mov rbx, 3
     cmp rsi, rbx
     je _listcontacts
 
     call _invalidinput
-
     ret
 
 _invalidinput:
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, invalidmessage
-    mov rdx, leninvalidmessage
-    syscall
-
+    output 1, invalidmessage, leninvalidmessage
     ret
 
 _listcontacts:
     call _openfileforreading
     call _readfile
     call _closefilereadonly
-    
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, datalog
-    mov rdx, 1000
-    syscall
-    
+
+    output 1, datalog, 1000
     ret
 
 _getinfo:
-    call _getname
-    call _getnum
-    call _savetofile
+    ;get name
+    output 1, namequestion, lennamequestion
+    input name, 50
     
-    ret
+    ;get number
+    output 1, numberquestion, lennumberquestion
+    input number, 50
 
-_getname:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, name
-    mov rdx, 50
-    syscall
-
-    ret
-
-_getnum:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, number
-    mov rdx, 50
-    syscall
-
-    ret
-
-_savetofile:
-    call _openfileforwriting
+    ;open file for writing
+    fileopen [filename], O_WRONLY
+    mov [fd_out], rax
     
-    mov rsi, name
-    mov rdx, 50
-    call _writetofile
-    
-    mov rsi, number
-    mov rdx, 15
-    call _writetofile
-    
-    call _closefilewriteonly
-    
+
+    output [fd_out], name, 50
+    output [fd_out], number, 50
+    fileclose [fd_out]   
     ret
 
 _openfileforreading:
-    mov rax, 2
-    mov rdi, filename
-    mov rsi, O_RDONLY
-    mov rdx, 0777
-    syscall
-    
+    fileopen filename, O_RDONLY    
     mov [fd_in], rax
     
     ret
     
 _openfileforwriting:
-    mov rax, 2
-    mov rdi, filename
-    mov rsi, O_WRONLY
-    mov rdx, 0777
-    syscall
-    
+    fileopen filename, O_WRONLY
     mov [fd_out], rax
-    
+
     ret
 
 _readfile:
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, datalog
-    mov rdx, 1000
-    syscall
-    
+    input datalog, 1000
     ret
 
 _searchfile:
     call _openfileforreading
     call _readfile
     call _closefilereadonly
-    
     ret
 
 _closefilereadonly:
-    mov rax, 3
-    mov rdi, [fd_in]
-    syscall
-    
+    fileclose [fd_in]
     ret
     
-_closefilewriteonly:
-    mov rax, 3
-    mov rdi, [fd_out]
-    syscall
-    
-    ret
-
-_writetofile:
-    mov rax, 1
-    mov rdi, 1
-    syscall
-    
-    ret
 
 section .data
     querymessage db 'What functionality are you looking for?', 10
@@ -212,15 +153,25 @@ section .data
     invalidmessage db 'Your input is invalid', 10
     leninvalidmessage equ $-invalidmessage
 
+    namequestion db 'Enter your name: '
+    lennamequestion equ $-namequestion
+
+    numberquestion db 'Enter your number: '
+    lennumberquestion equ $-numberquestion
+
+    filename db 'contacts.txt', 0
+    lenfilename equ $-filename
+
     filename db 'contacts.txt'
 
 segment .bss
-    answer resb 1
+    answer resb 2
     
-    name resb 50
+    name resq 50
     number resb 15
     
     datalog resb 1000
     
     fd_in resb 1
     fd_out resb 1
+
