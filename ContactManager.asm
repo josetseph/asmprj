@@ -1,11 +1,6 @@
-;Remove all comments
-
-;O_RDONLY    equ 0
-;O_APPEND    equ 1024
-;O_WRONLY    equ 1
-
 section .text
 
+;macro to get input
 %macro input 2
     mov rax, 0
     mov rdi, 0
@@ -14,6 +9,7 @@ section .text
     syscall
 %endmacro
 
+;macro to output to screen
 %macro print 2
     mov rax, 1
     mov rdi, 1
@@ -55,6 +51,7 @@ _getresponse:
 
     ret
 
+;Remember to Convert comparison statements to macros
 _checkresponse:
     mov rcx, [answer]
     sub rcx, 0x30
@@ -79,11 +76,7 @@ _checkresponse:
     ret
 
 _invalidinput:
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, invalidmessage
-    mov rdx, leninvalidmessage
-    syscall
+    print invalidmesage, leninvalidmessage
 
     jmp _exit
 
@@ -92,11 +85,7 @@ _listcontacts:
     call _readfile
     call _closefilereadonly
 
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, dataloge
-    mov rdx, 1000
-    syscall
+    print dataloge, 1000
 
     jmp _exit
 
@@ -110,52 +99,11 @@ _getinfo:
 
     jmp _exit
 
-;_countlength:
-    ;mov rax, name
-    ;push rax
-    ;mov rbx, 0
-    ;_loop:
-        ;inc rax
-        ;inc rbx
-	;mov cl, [rax]
-	;cmp cl, 0
-	;jne _loop
-
-    ;ret
-
 _savetofile:
-    ;call _openfileforreading
-    ;call _readfile
-    ;call _closefilereadonly
-
-    ;call _countlength
-
     call _openfileforwriting
-
-    ;call _countlength
-
-    ;mov rsi, dataloge
-    ;mov rdx, rbx
-    ;mov rdi, [fd_out]
-    ;mov rax, 1
-    ;syscall
 
     mov rax, name
     call _writetofile
-
-    ;pop rsi
-    ;mov rdx, rbx
-    ;mov rdi, [fd_out]
-    ;mov rax, 1
-    ;syscall
-
-    ;call _writetofile
-
-    ;mov rsi, endchar
-    ;mov rdx, lenendchar
-    ;mov rdi, [fd_out]
-    ;mov rax, 1
-    ;syscall
 
     call _closefilewriteonly
 
@@ -187,7 +135,6 @@ _readfile:
     mov rax, 0
     mov rdi, [fd_in]
     mov rsi, dataloge
-    ;call _countlength
     mov rdx, 1000
     syscall
 
