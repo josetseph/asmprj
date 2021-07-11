@@ -1,27 +1,27 @@
 section .text
 
-%macro input 2
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, %1
-    mov rdx, %2
-    syscall
-%endmacro
+%macro input 2                ;macro to get input
+    mov rax, 0                ;sys_read
+    mov rdi, 0                ;standard input
+    mov rsi, %1               ;first "variable" - where to store input
+    mov rdx, %2               ;second "variable" - length of input
+    syscall                   ;system call (call to kernel)
+%endmacro                     ;end of input macro
 
-%macro print 2
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, %1
-    mov rdx, %2
-    syscall
-%endmacro
+%macro print 2                ;macro to print
+    mov rax, 1                ;sys_write
+    mov rdi, 1                ;standard output
+    mov rsi, %1               ;first "variable" - what to print
+    mov rdx, %2               ;second "variable" - length of output
+    syscall                   ;system call (call to kernel)
+%endmacro                     ;end of print macro
 
-%macro compareans 2
-    mov rbx, %1
-    sub rbx, 0x30
-    cmp rcx, rbx
-    je %2
-%endmacro
+%macro compareans 2           ;macro to compare two numbers
+    mov rbx, %1               ;Placeholder for response check
+    sub rbx, 0x30             ;cnvert to number
+    cmp rcx, rbx              ;compare with response
+    je %2                     ;if equal, jump to second placeholder (label)
+%endmacro                     ;end macro
 
     global _start
 
@@ -34,8 +34,8 @@ _start:
     jmp _exit
 
 _exit:
-    mov rax, 60
-    syscall
+    mov rax, 60               ;sys_exit
+    syscall                   ;kernel call
 
 _askforfunction:
     print querymessage, lenquerymessage
@@ -82,11 +82,11 @@ _listcontacts:
     call _readfile
     call _closefilereadonly
 
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, dataloge
-    mov rdx, 1000
-    syscall
+    mov rax, 1                ;sys_write
+    mov rdi, 1                ;standard output
+    mov rsi, dataloge         ;what to print
+    mov rdx, 1000             ;amount of space to allocate
+    syscall                   ;kernel call
 
     jmp _exit
 
@@ -112,33 +112,33 @@ _savetofile:
     jmp _exit
 
 _openfileforreading:
-    mov rax, 2
-    mov rdi, filename
-    mov rsi, 0x0
-    mov rdx, 0777o
-    syscall
+    mov rax, 2                ;sys_open
+    mov rdi, filename         ;name of file
+    mov rsi, 0x0              ;read only mode
+    mov rdx, 0777o            ;full permissions to all users
+    syscall                   ;kernel call
 
-    mov [fd_in], rax
+    mov [fd_in], rax          ;save file descriptor
 
     ret
 
 _openfileforwriting:
-    mov rax, 2
-    mov rdi, filename
-    mov rsi, 0x441
-    mov rdx, 0777o
-    syscall
+    mov rax, 2                ;sys_open
+    mov rdi, filename         ;name of file
+    mov rsi, 0x441            ;create, append, write
+    mov rdx, 0777o            ;full permissions to all users
+    syscall                   ;kernel call
 
-    mov [fd_out], rax
+    mov [fd_out], rax         ;save file descriptor
 
     ret
 
 _readfile:
-    mov rax, 0
-    mov rdi, [fd_in]
-    mov rsi, dataloge
-    mov rdx, 1000
-    syscall
+    mov rax, 0                ;sys_read
+    mov rdi, [fd_in]          ;file descriptor
+    mov rsi, dataloge         ;save from file into dataloge
+    mov rdx, 1000             ;amount of space to allocate
+    syscall                   ;kernel call
 
     ret
 
@@ -151,100 +151,85 @@ _searchfile:
     print cases, lencases
 
     input name, 75
-    input name, 75
+    input name, 75            ;this appears twice because the first one is not regstered when program is run... nees to be fixed
     ;mov rbx, name
-    mov rbx, dataloge
-    mov rdi, 0
-    ;mov rsi, 0
-    dec rbx
-    ;dec rcx
+    mov rbx, dataloge         ;move information from dataloge to rbx
+    mov rdi, 0                ;set counter (rdi) to 0
+    dec rbx                   ;decrease rbx to before first character
 
-    jmp loop
+    jmp loop                  ;jump to loop label
 
-loop:
-    inc rbx
-    inc rdi
-    mov rcx, name ;inc rcx
-    mov al, [rbx]
-    mov ah, [rcx]
-    cmp al, ah
-    je loop2
+loop:                         ;check each character in contact book (dataloge) to see if it matches with first character in name to be found
+    inc rbx                   ;increase rbx to next character
+    inc rdi                   ;increase counter by one
+    mov rcx, name             ;set rcx to input (name) (first character in name)
+    mov al, [rbx]             ;put current character of rbx in al
+    mov ah, [rcx]             ;put current character of rcx into ah
+    cmp al, ah                ;compare al and ah
+    je loop2                  ;jump to loop2 if al and ah are equal
 
-    cmp al, 0
-    je _notfound
+    cmp al, 0                 ;else compare al to 0 (end of string)
+    je _notfound              ;jump to _notfound label if al and 0 are equal
 
-    ;mov rsi, 0
-    jmp loop
+    jmp loop                  ;else jump to loop
 
-loop2:
-    inc rbx
-    inc rcx
-    inc rdi
-    mov al, [rbx]
-    mov ah, [rcx]
-    cmp al, ah
-    jne loop3
+loop2:                        ;check each character in name to be found against entry in contact book (dataloge)
+    inc rbx                   ;move to next character in rbx
+    inc rcx                   ;move to next character in rcx
+    inc rdi                   ;increase rdi by one
+    mov al, [rbx]             ;put current rbx character into al
+    mov ah, [rcx]             ;put current rcx character into ah
+    cmp al, ah                ;compare al and ah
+    jne loop3                 ;jump to loop3 label if not equal
 
-    jmp loop2
+    jmp loop2                 ;else jump to loop2
 
-loop3:
-    inc rcx
-    mov ah, [rcx]
-    cmp ah, 0
-    je _setprint
+loop3:                        ;when all the characters in name to be found match with an entry in contact book,
+                                  ;check if all characters in name to be found are finished
+    inc rcx                   ;move to next character in rcx
+    mov ah, [rcx]             ;put current character in rcx into ah
+    cmp ah, 0                 ;compare ah to 0
+    je _setprint              ;jump to _setprint if equal
+    
+    jmp loop                  ;else jump to loop
 
-    ;inc rsi
-    jmp loop
+_setprint:                    ;go to starting point of where name to be found matches an entry in contact book (dataloge)
+    dec rbx                   ;move rbx to previous character
+    dec rcx                   ;move rcx to previous character
+    dec rdi                   ;decrease counter by one
+    mov al, [rbx]             ;put current character in rbx into al
+    mov ah, [rcx]             ;put current character in rcx into ah
+    cmp al, ah                ;compare al to ah
+    je _setprint              ;if equal, jump to _setprint label
 
-_setprint:
-    dec rbx
-    dec rcx
-    dec rdi
-    ;mov [rdnum], rdi
-    mov al, [rbx]
-    mov ah, [rcx]
-    cmp al, ah
-    je _setprint
+    mov rbx, dataloge         ;else put dataloge (entire contact book entry) into rbx 
+    jmp _printcontact         ;jump to _printcontact label
 
-    mov rbx, dataloge
-    jmp _printcontact
+_printcontact:                ;move to starting position of contact to be found in contact book (dataloge)
+    inc rbx                   ;move to next character in rbx
+    dec rdi                   ;decrease rdi by one
+    cmp rdi, 0                ;compare rdi to 0
+    jne _printcontact         ;if not equal, jump to _printcontact label
 
-_printcontact:
-    inc rbx
-    dec rdi
-    cmp rdi, 0
-    jne _printcontact
+    loop4:                    ;else move to starting point of that specific contact entry
+	dec rbx               ;move to previous character in rbx
+	mov al, [rbx]         ;move current character in rbx into al
+	cmp al, '-'           ;compare al to "-" (marker of individual contact entry beginning and end)
+	jne loop4             ;if not equal, jump to loop4 label
+	inc rbx               ;else increase rbx to next character (line break)
+	inc rbx               ;increment rbx to next character (starting position of specific contact
+    loop1:                    ;print out contact entry found character by character
+	print rbx, 1          ;print current character rbx is pointing to
+        inc rbx               ;increase rbx to next character
+	mov al, [rbx]         ;put character in rbx into al
+	cmp al, '-'           ;compare al with "\" (marker of individual contact entry beginning and end)
+	je _exit              ;if equal, jump to _exit
+	cmp al, 0             ;else compare al with 0 (end character) (end of string)
+	je _exit              ;if equal, jump to _exit label
 
-    loop4:
-	dec rbx
-	mov al, [rbx]
-	cmp al, '-'
-	jne loop4
-	inc rbx
-	inc rbx
-    loop1:
-	print rbx, 1
-        inc rbx
-	mov al, [rbx]
-	cmp al, '-'
-	je _exit
-	cmp al, 0
-	je _exit
-
-	jmp loop1
+	jmp loop1             ;else jump to loop1 label
 
     jmp _exit
-
-;_checkthis:
-    ;mov rbx, dataloge
-    ;mov rdi, [rdnum]
-    ;loopnext:
-	;inc rbx
-        ;dec rdi
-	;cmp rdi, 0
-	;jne loopnext
-
-	;jmp loop
 
 _notfound:
     print notfound, lennotfound
@@ -252,47 +237,41 @@ _notfound:
     jmp _exit
 
 _closefilereadonly:
-    mov rax, 3
-    mov rdi, [fd_in]
-    syscall
+    mov rax, 3                ;sys_close
+    mov rdi, [fd_in]          ;file descriptor
+    syscall                   ;kernel call
 
     ret
 
 _closefilewriteonly:
-    mov rax, 3
-    mov rdi, [fd_out]
-    syscall
+    mov rax, 3                ;sys_close
+    mov rdi, [fd_out]         ;file descriptor
+    syscall                   ;kernel call
 
     ret
 
 _writetofile:
-    push rax
-    mov rbx, 0
+    push rax                  ;push entry to add to contact book to stack
+    mov rbx, 0                ;set counter rbx equal to zero
 
-    _printloop:
-	inc rax
-	inc rbx
-	mov cl, [rax]
-	cmp cl, 0
-	jne _printloop
+    _printloop:               ;loop to count length of entry to add to contact book
+	inc rax               ;move to next character in rax
+	inc rbx               ;increase counter by 1
+	mov cl, [rax]         ;put current character in rax into cl
+	cmp cl, 0             ;compare cl to 0 (end character)
+	jne _printloop        ;jump if not equal to _printloop label
 
-	mov rax, 1
-	mov rdi, [fd_out]
-	mov rdx, 2
-	mov rsi, breaker
-	syscall
+	mov rax, 1            ;sys_write
+	mov rdi, [fd_out]     ;file descriptor
+	mov rdx, 2            ;length of text
+	mov rsi, breaker      ;text to write ("-" and 10 to mark beginning and end of data entry into contact book)
+	syscall               ;kernel call
 
-	mov rax, 1
-	mov rdi, [fd_out]
-	mov rdx, rbx
-	pop rsi
-	syscall
-
-	;mov rax, 1
-	;mov rdi, [fd_out]
-	;mov rdx, 2
-	;mov rsi, breaker
-	;syscall
+	mov rax, 1            ;sys_write
+	mov rdi, [fd_out]     ;file descriptor
+	mov rdx, rbx          ;calculater length of data to be entered into contact book
+	pop rsi               ;remove entry from stack and put into rsi to write to file
+	syscall               ;kernel call
 
     ret
 
@@ -334,4 +313,4 @@ segment .bss
     fd_in resb 1
     fd_out resb 1
     dataloge rest 1000
-    ;rdnum resb 5
+    
