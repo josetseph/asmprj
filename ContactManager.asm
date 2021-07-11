@@ -1,6 +1,5 @@
 section .text
 
-;macro to get input
 %macro input 2
     mov rax, 0
     mov rdi, 0
@@ -9,13 +8,19 @@ section .text
     syscall
 %endmacro
 
-;macro to output to screen
 %macro print 2
     mov rax, 1
     mov rdi, 1
     mov rsi, %1
     mov rdx, %2
     syscall
+%endmacro
+
+%macro compareans 2
+    mov rbx, %1
+    sub rbx, 0x30
+    cmp rcx, rbx
+    je %2
 %endmacro
 
     global _start
@@ -51,46 +56,43 @@ _getresponse:
 
     ret
 
-;Remember to Convert comparison statements to macros
 _checkresponse:
     mov rcx, [answer]
     sub rcx, 0x30
 
-    mov rbx, '1'
-    sub rbx, 0x30
-    cmp rcx, rbx
-    je _searchfile
+    compareans '1', _searchfile
 
-    mov rbx, '2'
-    sub rbx, 0x30
-    cmp rcx, rbx
-    je _getinfo
+    compareans '2', _getinfo
 
-    mov rbx, '3'
-    sub rbx, 0x30
-    cmp rcx, rbx
-    je _listcontacts
+    compareans '3', _listcontacts
 
     jmp _invalidinput
 
     ret
 
 _invalidinput:
-    print invalidmesage, leninvalidmessage
+    print invalidmessage, leninvalidmessage
 
     jmp _exit
+    ;call _getresponse
+    ;jmp _checkresponse
 
 _listcontacts:
     call _openfileforreading
     call _readfile
     call _closefilereadonly
 
-    print dataloge, 1000
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, dataloge
+    mov rdx, 1000
+    syscall
 
     jmp _exit
 
 _getinfo:
     print getinfoprompt, lengetinfoprompt
+    print cases, lencases
 
     input name, 75
     input name, 75
@@ -145,6 +147,108 @@ _searchfile:
     call _readfile
     call _closefilereadonly
 
+    print searchinfo, lensearchinfo
+    print cases, lencases
+
+    input name, 75
+    input name, 75
+    ;mov rbx, name
+    mov rbx, dataloge
+    mov rdi, 0
+    ;mov rsi, 0
+    dec rbx
+    ;dec rcx
+
+    jmp loop
+
+loop:
+    inc rbx
+    inc rdi
+    mov rcx, name ;inc rcx
+    mov al, [rbx]
+    mov ah, [rcx]
+    cmp al, ah
+    je loop2
+
+    cmp al, 0
+    je _notfound
+
+    ;mov rsi, 0
+    jmp loop
+
+loop2:
+    inc rbx
+    inc rcx
+    inc rdi
+    mov al, [rbx]
+    mov ah, [rcx]
+    cmp al, ah
+    jne loop3
+
+    jmp loop2
+
+loop3:
+    inc rcx
+    mov ah, [rcx]
+    cmp ah, 0
+    je _setprint
+
+    ;inc rsi
+    jmp loop
+
+_setprint:
+    dec rbx
+    dec rcx
+    dec rdi
+    ;mov [rdnum], rdi
+    mov al, [rbx]
+    mov ah, [rcx]
+    cmp al, ah
+    je _setprint
+
+    mov rbx, dataloge
+    jmp _printcontact
+
+_printcontact:
+    inc rbx
+    dec rdi
+    cmp rdi, 0
+    jne _printcontact
+
+    loop4:
+	dec rbx
+	mov al, [rbx]
+	cmp al, '-'
+	jne loop4
+	inc rbx
+	inc rbx
+    loop1:
+	print rbx, 1
+        inc rbx
+	mov al, [rbx]
+	cmp al, '-'
+	je _exit
+	cmp al, 0
+	je _exit
+
+	jmp loop1
+
+    jmp _exit
+
+;_checkthis:
+    ;mov rbx, dataloge
+    ;mov rdi, [rdnum]
+    ;loopnext:
+	;inc rbx
+        ;dec rdi
+	;cmp rdi, 0
+	;jne loopnext
+
+	;jmp loop
+
+_notfound:
+    print notfound, lennotfound
+
     jmp _exit
 
 _closefilereadonly:
@@ -174,9 +278,21 @@ _writetofile:
 
 	mov rax, 1
 	mov rdi, [fd_out]
+	mov rdx, 2
+	mov rsi, breaker
+	syscall
+
+	mov rax, 1
+	mov rdi, [fd_out]
 	mov rdx, rbx
 	pop rsi
 	syscall
+
+	;mov rax, 1
+	;mov rdi, [fd_out]
+	;mov rdx, 2
+	;mov rsi, breaker
+	;syscall
 
     ret
 
@@ -201,8 +317,16 @@ section .data
 
     filename db 'contacts.txt', 0
 
-    endchar db '', 10, 0
-    lenendchar equ $-endchar
+    notfound db 'No such contact found in contact book.', 10
+    lennotfound equ $-notfound
+
+    searchinfo db 'Enter Name or Number', 10
+    lensearchinfo equ $-searchinfo
+
+    cases db 'Please make sure to capitalise each Name', 10
+    lencases equ $-cases
+
+    breaker db '-', 10
 
 segment .bss
     answer resb 1
@@ -210,3 +334,4 @@ segment .bss
     fd_in resb 1
     fd_out resb 1
     dataloge rest 1000
+    ;rdnum resb 5
